@@ -1,6 +1,14 @@
 import bodyParser from "body-parser";
 import express from "express";
 import nodeMailer from "nodemailer";
+import firebase from "firebase-admin";
+
+var serviceAccount = require("../serviceAccountKey.json");
+
+firebase.initializeApp({
+  credential: firebase.credential.cert(serviceAccount),
+  databaseURL: "https://photo-ticket-app.firebaseio.com/"
+});
 
 const app = express();
 
@@ -35,7 +43,7 @@ app.post("/google-ocr", async function(req, res) {
   res.end();
 });
 
-app.post("/send-email", function(req, res) {
+app.post("/send-email", async function(req, res) {
   let transporter = nodeMailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
@@ -53,14 +61,31 @@ app.post("/send-email", function(req, res) {
     // html: '<b>NodeJS Email Tutorial</b>' // html body
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      return console.log(error);
-    }
-    console.log("message sent");
+  const lessThanOneHourAgo = date => {
+    const HOUR = 1000 * 60 * 60;
+    let anHourAgo = Date.now() - HOUR;
+    if (date > anHourAgo) {
+      return true;
+    } else return false;
+  };
 
-    res.end();
+  let db = firebase.database();
+  let userRef = db.ref(`allUsers/${req.body.id}`);
+  let timeLastMessage = await userRef.once("value", function(snapshot) {
+    return snapshot.val().lastOnline;
   });
+
+  if (lessThanOneHourAgo(timeLastMessage)) {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return console.log(error);
+      }
+      console.log("message sent");
+      res.end();
+    });
+  } else {
+    return res.end();
+  }
 });
 
 app.listen(port, err => {
