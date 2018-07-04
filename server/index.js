@@ -1,9 +1,9 @@
 import bodyParser from "body-parser";
 import express from "express";
 import firebase from "firebase-admin";
-const stripe = require("./constants/stripe");
-const configureServer = require("./server");
-const SERVER_CONFIGS = require("./constants/server");
+import { stripe } from "./constants/stripe";
+import { configureServer } from "./server";
+import { SERVER_CONFIGS } from "./constants/server";
 import {
   sendSMS,
   lessThanOneHourAgo,

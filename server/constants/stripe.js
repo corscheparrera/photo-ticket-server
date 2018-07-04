@@ -1,4 +1,4 @@
-const configureStripe = require("stripe");
+import configureStripe from "stripe";
 require("dotenv").config();
 
 const STRIPE_SECRET_KEY =
@@ -6,6 +6,4 @@ const STRIPE_SECRET_KEY =
     ? process.env.STRIPE_PRIVATE_KEY
     : process.env.STRIPE_PRIVATE_KEY;
 
-const stripe = configureStripe(STRIPE_SECRET_KEY);
-
-module.exports = stripe;
+export const stripe = configureStripe(STRIPE_SECRET_KEY);
