@@ -1,9 +1,10 @@
 import bodyParser from "body-parser";
 import express from "express";
-import nodeMailer from "nodemailer";
 import firebase from "firebase-admin";
+import { sendSMS, lessThanOneHourAgo, sendEmail } from "./helpers";
+require("dotenv").config();
 
-var serviceAccount = require("../serviceAccountKey.json");
+let serviceAccount = require("../serviceAccountKey.json");
 
 firebase.initializeApp({
   credential: firebase.credential.cert(serviceAccount),
@@ -20,6 +21,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
 app.post("/google-ocr", async function(req, res) {
   const googleAPIKey = "AIzaSyCAzY_-ph4ukwBkvEbEcmKmTDXMZUIjw5k";
   console.log("google ocr");
@@ -44,48 +53,26 @@ app.post("/google-ocr", async function(req, res) {
 });
 
 app.post("/send-email", async function(req, res) {
-  let transporter = nodeMailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: "mLussier1936@gmail.com",
-      pass: "Pablo123"
-    }
-  });
-  let mailOptions = {
-    from: "<mLussier1936@gmail.com>", // sender address
-    to: "<mLussier1936@gmail.com>", // list of receivers
-    subject: "test", // Subject line
-    text: `http://localhost:3000/${req.body.id}` // plain text body
-    // html: '<b>NodeJS Email Tutorial</b>' // html body
-  };
-
-  const lessThanOneHourAgo = date => {
-    const HOUR = 1000 * 60 * 60;
-    let anHourAgo = Date.now() - HOUR;
-    if (date > anHourAgo) {
-      return true;
-    } else return false;
-  };
-
   let db = firebase.database();
   let userRef = db.ref(`allUsers/${req.body.id}`);
-  let timeLastMessage = await userRef.once("value", function(snapshot) {
-    return snapshot.val().lastOnline;
-  });
+  let snapShot = await userRef.once("value");
+  let lastTimeOnline = snapShot.val().lastOnline;
 
-  if (lessThanOneHourAgo(timeLastMessage)) {
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        return console.log(error);
-      }
-      console.log("message sent");
-      res.end();
-    });
-  } else {
+  if (lessThanOneHourAgo(lastTimeOnline)) {
+    console.log(
+      "user last activity was more than an hour ago, message was sent"
+    );
+    sendEmail();
+  } else if (!lessThanOneHourAgo(lastTimeOnline)) {
+    console.log(
+      "user last activity was less than an hour ago, message wasn't sent"
+    );
     return res.end();
   }
+});
+
+app.post("/send-sms", async function(req, res) {
+  sendSMS();
 });
 
 app.listen(port, err => {
