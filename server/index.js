@@ -1,10 +1,19 @@
 import bodyParser from "body-parser";
 import express from "express";
 import firebase from "firebase-admin";
-import { sendSMS, lessThanOneHourAgo, sendEmail } from "./helpers";
+const stripe = require("./constants/stripe");
+const configureServer = require("./server");
+const SERVER_CONFIGS = require("./constants/server");
+import {
+  sendSMS,
+  lessThanOneHourAgo,
+  sendEmail,
+  postStripeCharge
+} from "./helpers";
+
 require("dotenv").config();
 
-let serviceAccount = require("../serviceAccountKey.json");
+let serviceAccount = require("../firebaseServiceAccountKey.json");
 firebase.initializeApp({
   credential: firebase.credential.cert(serviceAccount),
   databaseURL: "https://photo-ticket-app.firebaseio.com/"
@@ -13,7 +22,7 @@ let db = firebase.database();
 
 const app = express();
 
-const port = process.env.PORT || 5000;
+configureServer(app);
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -21,16 +30,16 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
+// app.use(function(req, res, next) {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   next();
+// });
 app.post("/google-ocr", async function(req, res) {
-  const googleAPIKey = "AIzaSyCAzY_-ph4ukwBkvEbEcmKmTDXMZUIjw5k";
+  const googleAPIKey = process.env.GOOGLE_VISION_KEY;
   console.log("google ocr");
   return await axios.post(
     `https://vision.googleapis.com/v1/images:annotate?key=${googleAPIKey}`,
@@ -78,11 +87,18 @@ app.post("/send-sms", async function(req, res) {
   sendSMS(phoneNumber);
 });
 
-app.listen(port, err => {
-  if (err) {
-    console.error(err);
-  }
-  {
-    console.log(`App listen to port ${port}`);
-  }
+app.get("/charge", (req, res) => {
+  res.send({
+    message: "Hello Stripe checkout server!",
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.post("/charge", (req, res) => {
+  stripe.charges.create(req.body, postStripeCharge(res));
+});
+
+app.listen(SERVER_CONFIGS.PORT, error => {
+  if (error) throw error;
+  console.log("Server running on port: " + SERVER_CONFIGS.PORT);
 });

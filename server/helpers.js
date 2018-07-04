@@ -1,7 +1,7 @@
 import moment from "moment";
 import nodeMailer from "nodemailer";
 import twilio from "twilio";
-import config from "./config";
+import { config } from "./constants/configTwilio";
 require("dotenv").config();
 
 let client = new twilio(config.accountSid, config.authToken);
@@ -25,7 +25,7 @@ export const lessThanOneHourAgo = timeActive => {
   if (!moment(timeActive).isValid()) return "danger"; // danger if not a date.
   if (
     moment(timeActive)
-      .add(60, "minutes")
+      .add(15, "minutes")
       .isBefore(/*now*/)
   ) {
     return true;
@@ -46,7 +46,7 @@ export const sendEmail = id => {
     from: "<mLussier1936@gmail.com>", // sender address
     to: "<mLussier1936@gmail.com>", // list of receivers
     subject: "test", // Subject line
-    text: `http://localhost:3000/${id}` // plain text body
+    text: `http://localhost:3000/chat/${id}` // plain text body
     // html: '<b>NodeJS Email Tutorial</b>' // html body
   };
   transporter.sendMail(mailOptions, (error, info) => {
@@ -55,4 +55,12 @@ export const sendEmail = id => {
     }
     res.end();
   });
+};
+
+export const postStripeCharge = res => (stripeErr, stripeRes) => {
+  if (stripeErr) {
+    res.status(500).send({ error: stripeErr });
+  } else {
+    res.status(200).send({ success: stripeRes });
+  }
 };
