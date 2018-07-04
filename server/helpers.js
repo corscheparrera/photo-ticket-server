@@ -6,13 +6,13 @@ require("dotenv").config();
 
 let client = new twilio(config.accountSid, config.authToken);
 
-export const sendSMS = () => {
+export const sendSMS = sendtTo => {
   client.messages.create(
     {
-      to: "+18194460388",
+      to: "+1" + sendtTo,
       from: process.env.TWILIO_SENDER_PHONE,
       body:
-        "Bonjour M. Lussier, vous avez reçu un message de Maître Harvey. Accèder à l'application Photo Ticket sur votre mobile afin de le consulter. Bonne journée"
+        "Bonjour, vous avez reçu un message de Maître Harvey. Accèder à l'application Photo Ticket sur votre mobile afin de le consulter."
     },
     (err, res) => {
       if (err) console.log(`An error has ocurred: ${err}`);
@@ -32,7 +32,7 @@ export const lessThanOneHourAgo = timeActive => {
   } else return false;
 };
 
-export const sendEmail = () => {
+export const sendEmail = id => {
   let transporter = nodeMailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
@@ -46,7 +46,7 @@ export const sendEmail = () => {
     from: "<mLussier1936@gmail.com>", // sender address
     to: "<mLussier1936@gmail.com>", // list of receivers
     subject: "test", // Subject line
-    text: `http://localhost:3000/${req.body.id}` // plain text body
+    text: `http://localhost:3000/${id}` // plain text body
     // html: '<b>NodeJS Email Tutorial</b>' // html body
   };
   transporter.sendMail(mailOptions, (error, info) => {

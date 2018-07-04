@@ -5,11 +5,11 @@ import { sendSMS, lessThanOneHourAgo, sendEmail } from "./helpers";
 require("dotenv").config();
 
 let serviceAccount = require("../serviceAccountKey.json");
-
 firebase.initializeApp({
   credential: firebase.credential.cert(serviceAccount),
   databaseURL: "https://photo-ticket-app.firebaseio.com/"
 });
+let db = firebase.database();
 
 const app = express();
 
@@ -53,7 +53,6 @@ app.post("/google-ocr", async function(req, res) {
 });
 
 app.post("/send-email", async function(req, res) {
-  let db = firebase.database();
   let userRef = db.ref(`allUsers/${req.body.id}`);
   let snapShot = await userRef.once("value");
   let lastTimeOnline = snapShot.val().lastOnline;
@@ -62,7 +61,7 @@ app.post("/send-email", async function(req, res) {
     console.log(
       "user last activity was more than an hour ago, message was sent"
     );
-    sendEmail();
+    sendEmail(req.body.id);
   } else if (!lessThanOneHourAgo(lastTimeOnline)) {
     console.log(
       "user last activity was less than an hour ago, message wasn't sent"
@@ -72,7 +71,11 @@ app.post("/send-email", async function(req, res) {
 });
 
 app.post("/send-sms", async function(req, res) {
-  sendSMS();
+  let userRef = db.ref(`allUsers/${req.body.id}`);
+  let snapShot = await userRef.once("value");
+  let phoneNumber = snapShot.val().phoneNumber;
+  console.log(phoneNumber);
+  sendSMS(phoneNumber);
 });
 
 app.listen(port, err => {
