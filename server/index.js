@@ -2,7 +2,7 @@ import bodyParser from "body-parser";
 import express from "express";
 import firebase from "firebase-admin";
 import { stripe } from "./constants/stripe";
-import { configureServer } from "./server";
+import { configureServer } from "./configureServer";
 import { SERVER_CONFIGS } from "./constants/server";
 import {
   sendSMS,
@@ -30,14 +30,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-// app.use(function(req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   next();
-// });
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
 app.post("/google-ocr", async function(req, res) {
   const googleAPIKey = process.env.GOOGLE_VISION_KEY;
   console.log("google ocr");

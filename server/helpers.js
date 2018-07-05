@@ -25,7 +25,7 @@ export const lessThanOneHourAgo = timeActive => {
   if (!moment(timeActive).isValid()) return "danger"; // danger if not a date.
   if (
     moment(timeActive)
-      .add(15, "minutes")
+      .add(30, "minutes")
       .isBefore(/*now*/)
   ) {
     return true;
