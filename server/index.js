@@ -1,5 +1,6 @@
 import bodyParser from "body-parser";
 import express from "express";
+import path from "path";
 import firebase from "firebase-admin";
 import { stripe } from "./constants/stripe";
 import { configureServer } from "./configureServer";
@@ -24,6 +25,8 @@ const app = express();
 
 configureServer(app);
 
+// Middlewares
+
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -38,7 +41,12 @@ app.use(function(req, res, next) {
   );
   next();
 });
-app.post("/google-ocr", async function(req, res) {
+
+// Serve front-end code
+app.use("/", express.static(path.join(__dirname, "../build")));
+
+// Routes
+app.post("/api/google-ocr", async function(req, res) {
   const googleAPIKey = process.env.GOOGLE_VISION_KEY;
   console.log("google ocr");
   return await axios.post(
@@ -61,7 +69,7 @@ app.post("/google-ocr", async function(req, res) {
   res.end();
 });
 
-app.post("/send-email", async function(req, res) {
+app.post("/api/send-email", async function(req, res) {
   let userRef = db.ref(`allUsers/${req.body.id}`);
   let snapShot = await userRef.once("value");
   let lastTimeOnline = snapShot.val().lastOnline;
@@ -79,7 +87,7 @@ app.post("/send-email", async function(req, res) {
   }
 });
 
-app.post("/send-sms", async function(req, res) {
+app.post("/api/send-sms", async function(req, res) {
   let userRef = db.ref(`allUsers/${req.body.id}`);
   let snapShot = await userRef.once("value");
   let phoneNumber = snapShot.val().phoneNumber;
@@ -87,18 +95,23 @@ app.post("/send-sms", async function(req, res) {
   sendSMS(phoneNumber);
 });
 
-app.get("/charge", (req, res) => {
+app.get("/api/charge", (req, res) => {
   res.send({
     message: "Hello Stripe checkout server!",
     timestamp: new Date().toISOString()
   });
 });
 
-app.post("/charge", (req, res) => {
+app.post("/api/charge", (req, res) => {
   stripe.charges.create(req.body, postStripeCharge(res));
 });
 
 app.listen(SERVER_CONFIGS.PORT, error => {
   if (error) throw error;
   console.log("Server running on port: " + SERVER_CONFIGS.PORT);
+});
+
+// Always return the main index.html, so react-router render the route in the client
+app.get("*", (_req, res) => {
+  res.sendFile(path.resolve(__dirname, "..", "build", "index.html"));
 });

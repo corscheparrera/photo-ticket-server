@@ -62,3 +62,7 @@ GoogleService-Info.plist
 
 # dotenv environment variables file
 .env
+
+
+#build
+/build
