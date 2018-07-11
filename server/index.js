@@ -1,4 +1,5 @@
 import bodyParser from "body-parser";
+import axios from "axios";
 import express from "express";
 import path from "path";
 import firebase from "firebase-admin";
@@ -28,7 +29,9 @@ configureServer(app);
 // Middlewares
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 // parse application/json
 app.use(bodyParser.json());
@@ -46,26 +49,39 @@ app.use(function(req, res, next) {
 app.use("/", express.static(path.join(__dirname, "../build")));
 
 // Routes
+app.get("/api/google-ocr", (req, res) => {
+  res.send({
+    message: "Hello Google OCR",
+    timestamp: new Date().toISOString()
+  });
+});
 app.post("/api/google-ocr", async function(req, res) {
   const googleAPIKey = process.env.GOOGLE_VISION_KEY;
-  console.log("google ocr");
-  return await axios.post(
-    `https://vision.googleapis.com/v1/images:annotate?key=${googleAPIKey}`,
-    {
-      requests: [
-        {
-          image: {
-            content: req.image
-          },
-          features: [
-            {
-              type: "TEXT_DETECTION"
-            }
-          ]
-        }
-      ]
-    }
-  );
+  console.log("google ocr starting");
+  return await axios
+    .post(
+      `https://vision.googleapis.com/v1/images:annotate?key=${googleAPIKey}`,
+      {
+        requests: [
+          {
+            image: {
+              content: req.body.image
+            },
+            features: [
+              {
+                type: "TEXT_DETECTION"
+              }
+            ]
+          }
+        ]
+      }
+    )
+    .then(resp => {
+      res.send(resp.data);
+    })
+    .catch(err => {
+      console.log(err);
+    });
   res.end();
 });
 
