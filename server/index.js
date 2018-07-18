@@ -113,7 +113,7 @@ app.post("/api/send-sms", async function(req, res) {
 
 app.get("/api/charge", (req, res) => {
   res.send({
-    message: "Hello Stripe checkout server!",
+    message: "Hello Stripe checkout route!",
     timestamp: new Date().toISOString()
   });
 });
