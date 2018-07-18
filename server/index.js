@@ -8,7 +8,7 @@ import { configureServer } from "./configureServer";
 import { SERVER_CONFIGS } from "./constants/server";
 import {
   sendSMS,
-  lessThanOneHourAgo,
+  lessThan30MinAgo,
   sendEmail,
   postStripeCharge
 } from "./helpers";
@@ -90,14 +90,14 @@ app.post("/api/send-email", async function(req, res) {
   let snapShot = await userRef.once("value");
   let lastTimeOnline = snapShot.val().lastOnline;
 
-  if (lessThanOneHourAgo(lastTimeOnline)) {
+  if (lessThan30MinAgo(lastTimeOnline) || !lastTimeOnline) {
     console.log(
-      "user last activity was more than an hour ago, message was sent"
+      "user last activity was more than 30 min ago, message was sent"
     );
     sendEmail(req.body.id);
-  } else if (!lessThanOneHourAgo(lastTimeOnline)) {
+  } else if (!lessThan30MinAgo(lastTimeOnline)) {
     console.log(
-      "user last activity was less than an hour ago, message wasn't sent"
+      "user last activity was less than 30 min ago, message wasn't sent"
     );
     return res.end();
   }

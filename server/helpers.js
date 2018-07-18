@@ -21,7 +21,7 @@ export const sendSMS = sendtTo => {
   );
 };
 
-export const lessThanOneHourAgo = timeActive => {
+export const lessThan30MinAgo = timeActive => {
   if (!moment(timeActive).isValid()) return "danger"; // danger if not a date.
   if (
     moment(timeActive)
