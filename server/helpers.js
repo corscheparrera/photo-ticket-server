@@ -46,7 +46,7 @@ export const sendEmail = id => {
     from: "<mLussier1936@gmail.com>", // sender address
     to: "<mLussier1936@gmail.com>", // list of receivers
     subject: "test", // Subject line
-    text: `https://photo-ticket.ca/chat/rACgvtw3QI/ID=${id}` // plain text body
+    text: `https://photo-ticket.com/chat/rACgvtw3QI/ID=${id}` // plain text body
     // html: '<b>NodeJS Email Tutorial</b>' // html body
   };
   transporter.sendMail(mailOptions, (error, info) => {
