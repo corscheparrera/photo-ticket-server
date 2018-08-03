@@ -62,7 +62,9 @@ app.post("/api/google-ocr", async function(req, res) {
         requests: [
           {
             image: {
-              content: req.body.image
+              source: {
+                imageUri: req.body.linkToImg
+              }
             },
             features: [
               {
